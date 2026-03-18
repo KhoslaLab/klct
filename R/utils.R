@@ -23,7 +23,9 @@ utils::globalVariables(
         "Sig",
         "Site",
         "Treatment",
-        "Value"
+        "Value",
+        ":=",
+        ".data"
     )
 )
 

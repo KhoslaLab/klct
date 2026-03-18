@@ -16,6 +16,7 @@ Description: This package contains functions to read in and analyze
     package.
 License: GPL (>= 3)
 URL: https://github.com/KhoslaLab/klct
+Depends: R (>= 4.1.0)
 Imports: 
     ARTool,
     dplyr,
@@ -26,7 +27,6 @@ Imports:
     readr,
     remotes,
     rmarkdown,
-    rstudioapi,
     sessioninfo,
     stats,
     tidyr,
