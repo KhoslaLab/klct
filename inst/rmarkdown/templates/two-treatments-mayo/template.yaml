@@ -1,0 +1,6 @@
+name: Compare Two Treatments (Mayo)
+description: >
+   A Mayo-themed, pre-filled template for analyzing NeoScan bone microCT data,
+   comparing two treatments with each sex analyzed separately. Uses
+   mayodown::mayohtml for Mayo branding.
+create_dir: FALSE
