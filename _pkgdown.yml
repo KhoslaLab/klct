@@ -3,6 +3,8 @@ template:
   bootstrap: 5
 home:
   links:
+  - text: Browse source code
+    href: https://github.com/KhoslaLab/klct
   - text: Report a bug
     href: https://github.com/KhoslaLab/klct/issues
 authors:
