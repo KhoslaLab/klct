@@ -1,0 +1,24 @@
+Name: NeoScan Two Treatment Comparison Setup
+Description: Setup this directory to compare two treatment groups (each sex separately)
+Binding: create_two_treatment_comparison
+Interactive: false
+
+Name: NeoScan Two Treatment Comparison Setup (Mayo)
+Description: Setup this directory to compare two treatment groups (Mayo-themed report)
+Binding: create_two_treatment_comparison_mayo
+Interactive: false
+
+Name: NeoScan Two Treatment Two Sex Comparison Setup
+Description: Setup this directory to compare two treatments and two sexes (two-way design)
+Binding: create_two_treatment_two_sex_comparison
+Interactive: false
+
+Name: NeoScan Two Treatment Two Sex Comparison Setup (Mayo)
+Description: Setup this directory to compare two treatments and two sexes (Mayo-themed report)
+Binding: create_two_treatment_two_sex_comparison_mayo
+Interactive: false
+
+Name: Update klct
+Description: Install/update the klct package from GitHub
+Binding: update_klct
+Interactive: false

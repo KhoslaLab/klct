@@ -1,0 +1,374 @@
+---
+title: "Template Title"
+author: "Your Name"
+date: "The Date"
+output:
+    mayodown::mayohtml:
+        code_folding: hide
+params:
+    mouse_table: "data/mouse-table.csv"
+    spine_trab: "data/spine_trabecular_data.csv"
+    met_data: "data/femur_metaphysis_data.csv"
+    dia_data: "data/femur_diaphysis_data.csv"
+    outliers: !r |
+        list(
+            spine = c(), 
+            met = c(), 
+            dia = c()
+        )
+    groups: !r c()
+    digits: 3
+    measures: "default"
+---
+
+# Background
+
+<!-- START BACKGROUND INFO -->
+<!-- Describe the experiment, genotypes/treatments, and hypotheses here. -->
+
+
+<!-- END BACKGROUND INFO -->
+
+```{r knitr-opts, include = FALSE}
+knitr::opts_chunk$set(
+    fig.height = 3
+)
+options(digits = params$digits)
+```
+
+```{r setup, collapse = TRUE}
+library(klct)
+library(dplyr)
+```
+
+```{r read-data, collapse = TRUE}
+mouse_table <- read_mouse_table(params$mouse_table)
+
+spine_trab <- read_trabecular(params$spine_trab,
+                              mouse_table, site = "Spine")
+
+met_trab <- read_trabecular(params$met_data,
+                            mouse_table, site = "Met")
+met_cort <- read_cortical(params$met_data,
+                          mouse_table, site = "Met")
+
+dia_cort <- read_cortical(params$dia_data,
+                          mouse_table, site = "Dia")
+```
+
+```{r process-params, collapse = TRUE}
+# Determine the group column name
+group_col <- intersect(c("Treatment", "Genotype"), names(mouse_table))[1]
+
+# Order the group factor if group names are supplied
+if (length(params$groups) > 0) {
+    spine_trab[[group_col]] <- factor(spine_trab[[group_col]],
+                                      levels = params$groups)
+    met_trab[[group_col]] <- factor(met_trab[[group_col]],
+                                    levels = params$groups)
+    met_cort[[group_col]] <- factor(met_cort[[group_col]],
+                                    levels = params$groups)
+    dia_cort[[group_col]] <- factor(dia_cort[[group_col]],
+                                    levels = params$groups)
+}
+
+# Exclude site-specific outliers
+if (length(params$outliers$spine) > 0) {
+    spine_trab <- spine_trab |> filter(!(AS %in% params$outliers$spine))
+}
+if (length(params$outliers$met) > 0) {
+    met_trab <- met_trab |> filter(!(AS %in% params$outliers$met))
+    met_cort <- met_cort |> filter(!(AS %in% params$outliers$met))
+}
+if (length(params$outliers$dia) > 0) {
+    dia_cort <- dia_cort |> filter(!(AS %in% params$outliers$dia))
+}
+
+# Collect all unique outlier AS numbers for the summary table
+all_outliers <- unique(c(params$outliers$spine, params$outliers$met,
+                         params$outliers$dia))
+
+# Resolve the measures parameter:
+#   "default" or missing -> NULL (use function defaults)
+#   "all"                -> "all" (analyze every detected measure)
+measures_param <- if (!exists("measures", where = params) ||
+                      identical(params$measures, "default")) NULL else params$measures
+```
+
+```{r outlier-table, results = "asis", eval = length(all_outliers) > 0, echo = length(all_outliers) > 0}
+cat("## Outliers Excluded\n\n")
+
+outlier_info <- mouse_table |>
+    filter(AS %in% all_outliers) |>
+    select(AS, Sex, all_of(group_col)) |>
+    mutate(
+        Spine = ifelse(AS %in% params$outliers$spine, "X", ""),
+        Met = ifelse(AS %in% params$outliers$met, "X", ""),
+        Dia = ifelse(AS %in% params$outliers$dia, "X", "")
+    )
+
+knitr::kable(outlier_info)
+```
+
+<!-- START OUTLIER INFO -->
+<!-- Describe the reason(s) for excluding outliers, if relevant (e.g., broken met). -->
+
+
+<!-- END OUTLIER INFO -->
+
+## Original Data
+
+`r xfun::embed_file(params$mouse_table, text = basename(params$mouse_table))`
+
+`r xfun::embed_file(params$spine_trab, text = basename(params$spine_trab))`
+
+`r xfun::embed_file(params$met_data, text = basename(params$met_data))`
+
+`r xfun::embed_file(params$dia_data, text = basename(params$dia_data))`
+
+
+# Lumbar Vertebra
+
+## Trabecular {.tabset}
+
+### Parametric Results
+
+```{r sp-tb-param, results = "asis"}
+compare_groups(spine_trab, measures = measures_param,
+               test = "parametric") |>
+    print_results()
+```
+
+### Nonparametric Results
+
+```{r sp-tb-np, results = "asis"}
+compare_groups(spine_trab, measures = measures_param,
+               test = "nonparametric") |>
+    print_results()
+```
+
+### Combined Sexes (Parametric)
+
+```{r sp-tb-combined-param, results = "asis"}
+spine_trab |>
+    mutate(Sex = "B") |>
+    compare_groups(measures = measures_param, test = "parametric") |>
+    print_results()
+```
+
+### Combined Sexes (Nonparametric)
+
+```{r sp-tb-combined-np, results = "asis"}
+spine_trab |>
+    mutate(Sex = "B") |>
+    compare_groups(measures = measures_param, test = "nonparametric") |>
+    print_results()
+```
+
+### Plots
+
+```{r sp-tb-plot}
+plot_groups(spine_trab, measures = measures_param) |> print_plots()
+```
+
+### Combined Sexes Plots
+
+```{r sp-tb-combined-plot}
+spine_trab |>
+    mutate(Sex = "B") |>
+    plot_groups(measures = measures_param, title = NULL) |>
+    print_plots()
+```
+
+### Data
+
+```{r sp-tb-dat, results = "asis"}
+print_data(spine_trab)
+```
+
+
+# Femoral Metaphysis
+
+## Trabecular {.tabset}
+
+### Parametric Results
+
+```{r f-met-tb-param, results = "asis"}
+compare_groups(met_trab, measures = measures_param,
+               test = "parametric") |>
+    print_results()
+```
+
+### Nonparametric Results
+
+```{r f-met-tb-np, results = "asis"}
+compare_groups(met_trab, measures = measures_param,
+               test = "nonparametric") |>
+    print_results()
+```
+
+### Combined Sexes (Parametric)
+
+```{r f-met-tb-combined-param, results = "asis"}
+met_trab |>
+    mutate(Sex = "B") |>
+    compare_groups(measures = measures_param, test = "parametric") |>
+    print_results()
+```
+
+### Combined Sexes (Nonparametric)
+
+```{r f-met-tb-combined-np, results = "asis"}
+met_trab |>
+    mutate(Sex = "B") |>
+    compare_groups(measures = measures_param, test = "nonparametric") |>
+    print_results()
+```
+
+### Plots
+
+```{r f-met-tb-plot}
+plot_groups(met_trab, measures = measures_param) |> print_plots()
+```
+
+### Combined Sexes Plots
+
+```{r f-met-tb-combined-plot}
+met_trab |>
+    mutate(Sex = "B") |>
+    plot_groups(measures = measures_param, title = NULL) |>
+    print_plots()
+```
+
+### Data
+
+```{r f-met-tb-dat, results = "asis"}
+print_data(met_trab)
+```
+
+
+## Cortical {.tabset}
+
+### Parametric Results
+
+```{r f-met-ct-param, results = "asis"}
+compare_groups(met_cort, measures = measures_param,
+               test = "parametric") |>
+    print_results()
+```
+
+### Nonparametric Results
+
+```{r f-met-ct-np, results = "asis"}
+compare_groups(met_cort, measures = measures_param,
+               test = "nonparametric") |>
+    print_results()
+```
+
+### Combined Sexes (Parametric)
+
+```{r f-met-ct-combined-param, results = "asis"}
+met_cort |>
+    mutate(Sex = "B") |>
+    compare_groups(measures = measures_param, test = "parametric") |>
+    print_results()
+```
+
+### Combined Sexes (Nonparametric)
+
+```{r f-met-ct-combined-np, results = "asis"}
+met_cort |>
+    mutate(Sex = "B") |>
+    compare_groups(measures = measures_param, test = "nonparametric") |>
+    print_results()
+```
+
+### Plots
+
+```{r f-met-ct-plot}
+plot_groups(met_cort, measures = measures_param) |> print_plots()
+```
+
+### Combined Sexes Plots
+
+```{r f-met-ct-combined-plot}
+met_cort |>
+    mutate(Sex = "B") |>
+    plot_groups(measures = measures_param, title = NULL) |>
+    print_plots()
+```
+
+### Data
+
+```{r f-met-ct-dat, results = "asis"}
+print_data(met_cort)
+```
+
+
+# Femoral Diaphysis
+
+## Cortical {.tabset}
+
+### Parametric Results
+
+```{r f-dia-ct-param, results = "asis"}
+compare_groups(dia_cort, measures = measures_param,
+               test = "parametric") |>
+    print_results()
+```
+
+### Nonparametric Results
+
+```{r f-dia-ct-np, results = "asis"}
+compare_groups(dia_cort, measures = measures_param,
+               test = "nonparametric") |>
+    print_results()
+```
+
+### Combined Sexes (Parametric)
+
+```{r f-dia-ct-combined-param, results = "asis"}
+dia_cort |>
+    mutate(Sex = "B") |>
+    compare_groups(measures = measures_param, test = "parametric") |>
+    print_results()
+```
+
+### Combined Sexes (Nonparametric)
+
+```{r f-dia-ct-combined-np, results = "asis"}
+dia_cort |>
+    mutate(Sex = "B") |>
+    compare_groups(measures = measures_param, test = "nonparametric") |>
+    print_results()
+```
+
+### Plots
+
+```{r f-dia-ct-plot}
+plot_groups(dia_cort, measures = measures_param) |> print_plots()
+```
+
+### Combined Sexes Plots
+
+```{r f-dia-ct-combined-plot}
+dia_cort |>
+    mutate(Sex = "B") |>
+    plot_groups(measures = measures_param, title = NULL) |>
+    print_plots()
+```
+
+### Data
+
+```{r f-dia-ct-dat, results = "asis"}
+print_data(dia_cort)
+```
+
+
+# Session Info
+
+Time this report was most recently updated: `r format(Sys.time(), '%c')`
+
+```{r session-info, collapse = TRUE}
+sessioninfo::session_info()
+```

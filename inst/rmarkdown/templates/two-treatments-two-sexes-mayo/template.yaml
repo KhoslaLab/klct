@@ -1,0 +1,6 @@
+name: Compare Two Treatments and Two Sexes (Mayo)
+description: >
+   A Mayo-themed, pre-filled template for analyzing NeoScan bone microCT data
+   using a two-way (Treatment x Sex) design with both parametric and
+   nonparametric options. Uses mayodown::mayohtml for Mayo branding.
+create_dir: FALSE

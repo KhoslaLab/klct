@@ -1,0 +1,6 @@
+name: Compare Two Treatments and Two Sexes
+description: >
+   A standardized, pre-filled template for analyzing NeoScan bone microCT data
+   using a two-way (Treatment x Sex) design with both parametric and
+   nonparametric options.
+create_dir: FALSE
