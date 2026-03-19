@@ -1,6 +1,6 @@
 Package: klct
 Title: Analyze NeoScan microCT Data
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: 
     person("Richard", "Lindsey", , "richard.c.lindsey@ricompute.com", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0001-9911-4136"))
