@@ -44,16 +44,30 @@ library(dplyr)
 ```{r read-data, collapse = TRUE}
 mouse_table <- read_mouse_table(params$mouse_table)
 
-spine_trab <- read_trabecular(params$spine_trab,
-                              mouse_table, site = "Spine")
+# Check which data files are available
+has_spine <- !is.null(params$spine_trab) && nzchar(params$spine_trab) &&
+    file.exists(params$spine_trab)
+has_met <- !is.null(params$met_data) && nzchar(params$met_data) &&
+    file.exists(params$met_data)
+has_dia <- !is.null(params$dia_data) && nzchar(params$dia_data) &&
+    file.exists(params$dia_data)
 
-met_trab <- read_trabecular(params$met_data,
-                            mouse_table, site = "Met")
-met_cort <- read_cortical(params$met_data,
-                          mouse_table, site = "Met")
+if (has_spine) {
+    spine_trab <- read_trabecular(params$spine_trab,
+                                  mouse_table, site = "Spine")
+}
 
-dia_cort <- read_cortical(params$dia_data,
-                          mouse_table, site = "Dia")
+if (has_met) {
+    met_trab <- read_trabecular(params$met_data,
+                                mouse_table, site = "Met")
+    met_cort <- read_cortical(params$met_data,
+                              mouse_table, site = "Met")
+}
+
+if (has_dia) {
+    dia_cort <- read_cortical(params$dia_data,
+                              mouse_table, site = "Dia")
+}
 ```
 
 ```{r process-params, collapse = TRUE}
@@ -62,25 +76,31 @@ group_col <- intersect(c("Treatment", "Genotype"), names(mouse_table))[1]
 
 # Order the group factor if group names are supplied
 if (length(params$groups) > 0) {
-    spine_trab[[group_col]] <- factor(spine_trab[[group_col]],
-                                      levels = params$groups)
-    met_trab[[group_col]] <- factor(met_trab[[group_col]],
-                                    levels = params$groups)
-    met_cort[[group_col]] <- factor(met_cort[[group_col]],
-                                    levels = params$groups)
-    dia_cort[[group_col]] <- factor(dia_cort[[group_col]],
-                                    levels = params$groups)
+    if (has_spine) {
+        spine_trab[[group_col]] <- factor(spine_trab[[group_col]],
+                                          levels = params$groups)
+    }
+    if (has_met) {
+        met_trab[[group_col]] <- factor(met_trab[[group_col]],
+                                        levels = params$groups)
+        met_cort[[group_col]] <- factor(met_cort[[group_col]],
+                                        levels = params$groups)
+    }
+    if (has_dia) {
+        dia_cort[[group_col]] <- factor(dia_cort[[group_col]],
+                                        levels = params$groups)
+    }
 }
 
 # Exclude site-specific outliers
-if (length(params$outliers$spine) > 0) {
+if (has_spine && length(params$outliers$spine) > 0) {
     spine_trab <- spine_trab |> filter(!(AS %in% params$outliers$spine))
 }
-if (length(params$outliers$met) > 0) {
+if (has_met && length(params$outliers$met) > 0) {
     met_trab <- met_trab |> filter(!(AS %in% params$outliers$met))
     met_cort <- met_cort |> filter(!(AS %in% params$outliers$met))
 }
-if (length(params$outliers$dia) > 0) {
+if (has_dia && length(params$outliers$dia) > 0) {
     dia_cort <- dia_cort |> filter(!(AS %in% params$outliers$dia))
 }
 
@@ -120,271 +140,320 @@ knitr::kable(outlier_info)
 
 `r xfun::embed_file(params$mouse_table, text = basename(params$mouse_table))`
 
-`r xfun::embed_file(params$spine_trab, text = basename(params$spine_trab))`
+`r if (has_spine) xfun::embed_file(params$spine_trab, text = basename(params$spine_trab))`
 
-`r xfun::embed_file(params$met_data, text = basename(params$met_data))`
+`r if (has_met) xfun::embed_file(params$met_data, text = basename(params$met_data))`
 
-`r xfun::embed_file(params$dia_data, text = basename(params$dia_data))`
+`r if (has_dia) xfun::embed_file(params$dia_data, text = basename(params$dia_data))`
 
 
-# Lumbar Vertebra
+```{r spine-header, results = "asis", echo = FALSE, eval = has_spine}
+cat("\n\n# Lumbar Vertebra\n\n## Trabecular {.tabset}\n\n### Two-Way (Parametric)\n\n")
+```
 
-## Trabecular {.tabset}
-
-### Two-Way (Parametric)
-
-```{r sp-tb-2x2-param, results = "asis"}
+```{r sp-tb-2x2-param, results = "asis", eval = has_spine}
 compare_groups_2x2(spine_trab, measures = measures_param,
                    test = "parametric") |>
     print_results_2x2()
 ```
 
-### Two-Way (Nonparametric)
+```{r spine-2x2-np-header, results = "asis", echo = FALSE, eval = has_spine}
+cat("\n\n### Two-Way (Nonparametric)\n\n")
+```
 
-```{r sp-tb-2x2-np, results = "asis"}
+```{r sp-tb-2x2-np, results = "asis", eval = has_spine}
 compare_groups_2x2(spine_trab, measures = measures_param,
                    test = "nonparametric") |>
     print_results_2x2()
 ```
 
-### Combined Sexes (Parametric)
+```{r spine-combined-param-header, results = "asis", echo = FALSE, eval = has_spine}
+cat("\n\n### Combined Sexes (Parametric)\n\n")
+```
 
-```{r sp-tb-combined-param, results = "asis"}
+```{r sp-tb-combined-param, results = "asis", eval = has_spine}
 spine_trab |>
     mutate(Sex = "B") |>
     compare_groups(measures = measures_param, test = "parametric") |>
     print_results()
 ```
 
-### Combined Sexes (Nonparametric)
+```{r spine-combined-np-header, results = "asis", echo = FALSE, eval = has_spine}
+cat("\n\n### Combined Sexes (Nonparametric)\n\n")
+```
 
-```{r sp-tb-combined-np, results = "asis"}
+```{r sp-tb-combined-np, results = "asis", eval = has_spine}
 spine_trab |>
     mutate(Sex = "B") |>
     compare_groups(measures = measures_param, test = "nonparametric") |>
     print_results()
 ```
 
-### Two-Way Plots
+```{r spine-2x2-plots-header, results = "asis", echo = FALSE, eval = has_spine}
+cat("\n\n### Two-Way Plots\n\n")
+```
 
-```{r sp-tb-2x2-plot, fig.width = 4, fig.height = 4}
+```{r sp-tb-2x2-plot, fig.width = 4, fig.height = 4, eval = has_spine}
 plot_groups_2x2(spine_trab, measures = measures_param) |> print_plots()
 ```
 
-### By-Sex Plots
+```{r spine-plots-header, results = "asis", echo = FALSE, eval = has_spine}
+cat("\n\n### By-Sex Plots\n\n")
+```
 
-```{r sp-tb-plot}
+```{r sp-tb-plot, eval = has_spine}
 plot_groups(spine_trab, measures = measures_param) |> print_plots()
 ```
 
-### Combined Sexes Plots
+```{r spine-combined-plots-header, results = "asis", echo = FALSE, eval = has_spine}
+cat("\n\n### Combined Sexes Plots\n\n")
+```
 
-```{r sp-tb-combined-plot}
+```{r sp-tb-combined-plot, eval = has_spine}
 spine_trab |>
     mutate(Sex = "B") |>
     plot_groups(measures = measures_param, title = NULL) |>
     print_plots()
 ```
 
-### Data
+```{r spine-data-header, results = "asis", echo = FALSE, eval = has_spine}
+cat("\n\n### Data\n\n")
+```
 
-```{r sp-tb-dat, results = "asis"}
+```{r sp-tb-dat, results = "asis", eval = has_spine}
 print_data(spine_trab)
 ```
 
 
-# Femoral Metaphysis
+```{r met-header, results = "asis", echo = FALSE, eval = has_met}
+cat("\n\n# Femoral Metaphysis\n\n## Trabecular {.tabset}\n\n### Two-Way (Parametric)\n\n")
+```
 
-## Trabecular {.tabset}
-
-### Two-Way (Parametric)
-
-```{r f-met-tb-2x2-param, results = "asis"}
+```{r f-met-tb-2x2-param, results = "asis", eval = has_met}
 compare_groups_2x2(met_trab, measures = measures_param,
                    test = "parametric") |>
     print_results_2x2()
 ```
 
-### Two-Way (Nonparametric)
+```{r met-tb-2x2-np-header, results = "asis", echo = FALSE, eval = has_met}
+cat("\n\n### Two-Way (Nonparametric)\n\n")
+```
 
-```{r f-met-tb-2x2-np, results = "asis"}
+```{r f-met-tb-2x2-np, results = "asis", eval = has_met}
 compare_groups_2x2(met_trab, measures = measures_param,
                    test = "nonparametric") |>
     print_results_2x2()
 ```
 
-### Combined Sexes (Parametric)
+```{r met-tb-combined-param-header, results = "asis", echo = FALSE, eval = has_met}
+cat("\n\n### Combined Sexes (Parametric)\n\n")
+```
 
-```{r f-met-tb-combined-param, results = "asis"}
+```{r f-met-tb-combined-param, results = "asis", eval = has_met}
 met_trab |>
     mutate(Sex = "B") |>
     compare_groups(measures = measures_param, test = "parametric") |>
     print_results()
 ```
 
-### Combined Sexes (Nonparametric)
+```{r met-tb-combined-np-header, results = "asis", echo = FALSE, eval = has_met}
+cat("\n\n### Combined Sexes (Nonparametric)\n\n")
+```
 
-```{r f-met-tb-combined-np, results = "asis"}
+```{r f-met-tb-combined-np, results = "asis", eval = has_met}
 met_trab |>
     mutate(Sex = "B") |>
     compare_groups(measures = measures_param, test = "nonparametric") |>
     print_results()
 ```
 
-### Two-Way Plots
+```{r met-tb-2x2-plots-header, results = "asis", echo = FALSE, eval = has_met}
+cat("\n\n### Two-Way Plots\n\n")
+```
 
-```{r f-met-tb-2x2-plot, fig.width = 4, fig.height = 4}
+```{r f-met-tb-2x2-plot, fig.width = 4, fig.height = 4, eval = has_met}
 plot_groups_2x2(met_trab, measures = measures_param) |> print_plots()
 ```
 
-### By-Sex Plots
+```{r met-tb-plots-header, results = "asis", echo = FALSE, eval = has_met}
+cat("\n\n### By-Sex Plots\n\n")
+```
 
-```{r f-met-tb-plot}
+```{r f-met-tb-plot, eval = has_met}
 plot_groups(met_trab, measures = measures_param) |> print_plots()
 ```
 
-### Combined Sexes Plots
+```{r met-tb-combined-plots-header, results = "asis", echo = FALSE, eval = has_met}
+cat("\n\n### Combined Sexes Plots\n\n")
+```
 
-```{r f-met-tb-combined-plot}
+```{r f-met-tb-combined-plot, eval = has_met}
 met_trab |>
     mutate(Sex = "B") |>
     plot_groups(measures = measures_param, title = NULL) |>
     print_plots()
 ```
 
-### Data
+```{r met-tb-data-header, results = "asis", echo = FALSE, eval = has_met}
+cat("\n\n### Data\n\n")
+```
 
-```{r f-met-tb-dat, results = "asis"}
+```{r f-met-tb-dat, results = "asis", eval = has_met}
 print_data(met_trab)
 ```
 
+```{r met-ct-header, results = "asis", echo = FALSE, eval = has_met}
+cat("\n\n## Cortical {.tabset}\n\n### Two-Way (Parametric)\n\n")
+```
 
-## Cortical {.tabset}
-
-### Two-Way (Parametric)
-
-```{r f-met-ct-2x2-param, results = "asis"}
+```{r f-met-ct-2x2-param, results = "asis", eval = has_met}
 compare_groups_2x2(met_cort, measures = measures_param,
                    test = "parametric") |>
     print_results_2x2()
 ```
 
-### Two-Way (Nonparametric)
+```{r met-ct-2x2-np-header, results = "asis", echo = FALSE, eval = has_met}
+cat("\n\n### Two-Way (Nonparametric)\n\n")
+```
 
-```{r f-met-ct-2x2-np, results = "asis"}
+```{r f-met-ct-2x2-np, results = "asis", eval = has_met}
 compare_groups_2x2(met_cort, measures = measures_param,
                    test = "nonparametric") |>
     print_results_2x2()
 ```
 
-### Combined Sexes (Parametric)
+```{r met-ct-combined-param-header, results = "asis", echo = FALSE, eval = has_met}
+cat("\n\n### Combined Sexes (Parametric)\n\n")
+```
 
-```{r f-met-ct-combined-param, results = "asis"}
+```{r f-met-ct-combined-param, results = "asis", eval = has_met}
 met_cort |>
     mutate(Sex = "B") |>
     compare_groups(measures = measures_param, test = "parametric") |>
     print_results()
 ```
 
-### Combined Sexes (Nonparametric)
+```{r met-ct-combined-np-header, results = "asis", echo = FALSE, eval = has_met}
+cat("\n\n### Combined Sexes (Nonparametric)\n\n")
+```
 
-```{r f-met-ct-combined-np, results = "asis"}
+```{r f-met-ct-combined-np, results = "asis", eval = has_met}
 met_cort |>
     mutate(Sex = "B") |>
     compare_groups(measures = measures_param, test = "nonparametric") |>
     print_results()
 ```
 
-### Two-Way Plots
+```{r met-ct-2x2-plots-header, results = "asis", echo = FALSE, eval = has_met}
+cat("\n\n### Two-Way Plots\n\n")
+```
 
-```{r f-met-ct-2x2-plot, fig.width = 4, fig.height = 4}
+```{r f-met-ct-2x2-plot, fig.width = 4, fig.height = 4, eval = has_met}
 plot_groups_2x2(met_cort, measures = measures_param) |> print_plots()
 ```
 
-### By-Sex Plots
+```{r met-ct-plots-header, results = "asis", echo = FALSE, eval = has_met}
+cat("\n\n### By-Sex Plots\n\n")
+```
 
-```{r f-met-ct-plot}
+```{r f-met-ct-plot, eval = has_met}
 plot_groups(met_cort, measures = measures_param) |> print_plots()
 ```
 
-### Combined Sexes Plots
+```{r met-ct-combined-plots-header, results = "asis", echo = FALSE, eval = has_met}
+cat("\n\n### Combined Sexes Plots\n\n")
+```
 
-```{r f-met-ct-combined-plot}
+```{r f-met-ct-combined-plot, eval = has_met}
 met_cort |>
     mutate(Sex = "B") |>
     plot_groups(measures = measures_param, title = NULL) |>
     print_plots()
 ```
 
-### Data
+```{r met-ct-data-header, results = "asis", echo = FALSE, eval = has_met}
+cat("\n\n### Data\n\n")
+```
 
-```{r f-met-ct-dat, results = "asis"}
+```{r f-met-ct-dat, results = "asis", eval = has_met}
 print_data(met_cort)
 ```
 
 
-# Femoral Diaphysis
+```{r dia-header, results = "asis", echo = FALSE, eval = has_dia}
+cat("\n\n# Femoral Diaphysis\n\n## Cortical {.tabset}\n\n### Two-Way (Parametric)\n\n")
+```
 
-## Cortical {.tabset}
-
-### Two-Way (Parametric)
-
-```{r f-dia-ct-2x2-param, results = "asis"}
+```{r f-dia-ct-2x2-param, results = "asis", eval = has_dia}
 compare_groups_2x2(dia_cort, measures = measures_param,
                    test = "parametric") |>
     print_results_2x2()
 ```
 
-### Two-Way (Nonparametric)
+```{r dia-2x2-np-header, results = "asis", echo = FALSE, eval = has_dia}
+cat("\n\n### Two-Way (Nonparametric)\n\n")
+```
 
-```{r f-dia-ct-2x2-np, results = "asis"}
+```{r f-dia-ct-2x2-np, results = "asis", eval = has_dia}
 compare_groups_2x2(dia_cort, measures = measures_param,
                    test = "nonparametric") |>
     print_results_2x2()
 ```
 
-### Combined Sexes (Parametric)
+```{r dia-combined-param-header, results = "asis", echo = FALSE, eval = has_dia}
+cat("\n\n### Combined Sexes (Parametric)\n\n")
+```
 
-```{r f-dia-ct-combined-param, results = "asis"}
+```{r f-dia-ct-combined-param, results = "asis", eval = has_dia}
 dia_cort |>
     mutate(Sex = "B") |>
     compare_groups(measures = measures_param, test = "parametric") |>
     print_results()
 ```
 
-### Combined Sexes (Nonparametric)
+```{r dia-combined-np-header, results = "asis", echo = FALSE, eval = has_dia}
+cat("\n\n### Combined Sexes (Nonparametric)\n\n")
+```
 
-```{r f-dia-ct-combined-np, results = "asis"}
+```{r f-dia-ct-combined-np, results = "asis", eval = has_dia}
 dia_cort |>
     mutate(Sex = "B") |>
     compare_groups(measures = measures_param, test = "nonparametric") |>
     print_results()
 ```
 
-### Two-Way Plots
+```{r dia-2x2-plots-header, results = "asis", echo = FALSE, eval = has_dia}
+cat("\n\n### Two-Way Plots\n\n")
+```
 
-```{r f-dia-ct-2x2-plot, fig.width = 4, fig.height = 4}
+```{r f-dia-ct-2x2-plot, fig.width = 4, fig.height = 4, eval = has_dia}
 plot_groups_2x2(dia_cort, measures = measures_param) |> print_plots()
 ```
 
-### By-Sex Plots
+```{r dia-plots-header, results = "asis", echo = FALSE, eval = has_dia}
+cat("\n\n### By-Sex Plots\n\n")
+```
 
-```{r f-dia-ct-plot}
+```{r f-dia-ct-plot, eval = has_dia}
 plot_groups(dia_cort, measures = measures_param) |> print_plots()
 ```
 
-### Combined Sexes Plots
+```{r dia-combined-plots-header, results = "asis", echo = FALSE, eval = has_dia}
+cat("\n\n### Combined Sexes Plots\n\n")
+```
 
-```{r f-dia-ct-combined-plot}
+```{r f-dia-ct-combined-plot, eval = has_dia}
 dia_cort |>
     mutate(Sex = "B") |>
     plot_groups(measures = measures_param, title = NULL) |>
     print_plots()
 ```
 
-### Data
+```{r dia-data-header, results = "asis", echo = FALSE, eval = has_dia}
+cat("\n\n### Data\n\n")
+```
 
-```{r f-dia-ct-dat, results = "asis"}
+```{r f-dia-ct-dat, results = "asis", eval = has_dia}
 print_data(dia_cort)
 ```
 
