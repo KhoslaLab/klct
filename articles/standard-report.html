@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">klct</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -99,17 +99,22 @@ folder:</p>
 <li>
 <strong><code>mouse-table.csv</code></strong> – A lookup table
 defining each sample’s Animal ID, AS (key registry) number, sex, and
-treatment (required).</li>
+treatment (<strong>required</strong>).</li>
 <li>
 <strong><code>spine_trabecular_data.csv</code></strong> – Trabecular
-bone data for the lumbar vertebra.</li>
+bone data for the lumbar vertebra (optional).</li>
 <li>
 <strong><code>femur_metaphysis_data.csv</code></strong> – Combined
-cortical and trabecular bone data for the femoral metaphysis.</li>
+cortical and trabecular bone data for the femoral metaphysis
+(optional).</li>
 <li>
 <strong><code>femur_diaphysis_data.csv</code></strong> – Cortical
-bone data for the femoral diaphysis.</li>
+bone data for the femoral diaphysis (optional).</li>
 </ul>
+<p>Only the mouse table is required. If any of the three data files are
+missing, the corresponding section will simply be omitted from the
+report. This allows you to generate a report for any combination of
+skeletal sites.</p>
 <p>Your project folder should now look something like this:</p>
 <p><img src="im/data-folder.png" class="r-plt" alt="" width="80%"></p>
 <p>These files technically can be renamed whatever you want, but you
@@ -200,6 +205,10 @@ the file paths to your data files:</p>
 <span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="at">    </span><span class="fu">dia_data</span><span class="kw">:</span><span class="at"> </span><span class="st">"data/femur_diaphysis_data.csv"</span></span></code></pre></div>
 <p>If you have renamed any of the files or placed them somewhere other
 than the <code>data</code> folder, update the file paths here.</p>
+<p>If you do not have data for a particular skeletal site, you can
+either delete that file from the <code>data</code> folder or clear its
+path in the <code>params</code> section (set it to <code>""</code>). The
+report will skip any section whose data file is not found.</p>
 </div>
 <div class="section level3">
 <h3 id="specify-outliers-optional">Specify Outliers (optional)<a class="anchor" aria-label="anchor" href="#specify-outliers-optional"></a>

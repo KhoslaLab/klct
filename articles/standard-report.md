@@ -39,13 +39,18 @@ Create a subfolder called `data` inside your project folder. Place the
 following CSV files into the `data` folder:
 
 - **`mouse-table.csv`** – A lookup table defining each sample’s Animal
-  ID, AS (key registry) number, sex, and treatment (required).
+  ID, AS (key registry) number, sex, and treatment (**required**).
 - **`spine_trabecular_data.csv`** – Trabecular bone data for the lumbar
-  vertebra.
+  vertebra (optional).
 - **`femur_metaphysis_data.csv`** – Combined cortical and trabecular
-  bone data for the femoral metaphysis.
+  bone data for the femoral metaphysis (optional).
 - **`femur_diaphysis_data.csv`** – Cortical bone data for the femoral
-  diaphysis.
+  diaphysis (optional).
+
+Only the mouse table is required. If any of the three data files are
+missing, the corresponding section will simply be omitted from the
+report. This allows you to generate a report for any combination of
+skeletal sites.
 
 Your project folder should now look something like this:
 
@@ -151,6 +156,11 @@ params:
 
 If you have renamed any of the files or placed them somewhere other than
 the `data` folder, update the file paths here.
+
+If you do not have data for a particular skeletal site, you can either
+delete that file from the `data` folder or clear its path in the
+`params` section (set it to `""`). The report will skip any section
+whose data file is not found.
 
 ### Specify Outliers (optional)
 

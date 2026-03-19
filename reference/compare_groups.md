@@ -2,7 +2,7 @@
 
 This function takes in trabecular or cortical bone microCT data at one
 site and compares it between two treatments. By default, each sex is
-compared separately. A parametric (Student's *t*-test) or nonparametric
+compared separately. A parametric (Welch's *t*-test) or nonparametric
 (Wilcoxon rank-sum test) approach can be selected.
 
 ## Usage
@@ -45,17 +45,28 @@ compare_groups(data, type = NULL, measures = NULL, test = "parametric")
 - test:
 
   A string indicating which statistical test to use. Options are
-  `"parametric"` (default) for a Student's *t*-test, or
-  `"nonparametric"` for a Wilcoxon rank-sum test.
+  `"parametric"` (default) for Welch's *t*-test, or `"nonparametric"`
+  for a Wilcoxon rank-sum test.
 
 ## Value
 
 A list of each bone measure analyzed. Each measure is itself a list of
 each sex analyzed. Each sex is a tibble/data frame containing columns
-for `Sex`, `Treatment`, `n`, `Mean`, `SEM`, `P`, and `Sig` (a string
-containing `"*"` if *P* \< 0.05, `"**"` if *P* \< 0.01, or `"***"` if
-*P* \< 0.001). When `test = "nonparametric"`, `Mean` is replaced by
-`Median` and `SEM` by `IQR`.
+for `Sex`, `Treatment`, `n`, and summary/test statistics.
+
+When `test = "parametric"`, the columns include `Mean`, `SD`, `SEM`,
+`Diff`, `CI.Low`, `CI.High`, `Pct.Change`, `P`, `P.adj`, and `Sig`. When
+`test = "nonparametric"`, the columns include `Median`, `Q1`, `Q3`,
+`Diff`, `CI.Low`, `CI.High`, `Pct.Change`, `P`, `P.adj`, and `Sig`.
+
+`Diff` is the difference (group 2 minus group 1): the difference in
+means for parametric, or the Hodges–Lehmann estimate of the location
+shift for nonparametric. `CI.Low` and `CI.High` are the 95% confidence
+interval bounds for that difference. `Pct.Change` is the percent change
+of the second group relative to the first. `P.adj` is the
+Benjamini–Hochberg-adjusted *p*-value across all measures within each
+sex. `Sig` is based on the raw (unadjusted) *p*-value: `"*"` if *P* \<
+0.05, `"**"` if *P* \< 0.01, `"***"` if *P* \< 0.001.
 
 ## Examples
 

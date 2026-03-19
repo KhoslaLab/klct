@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">klct</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,33 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.0" id="klct-020">klct 0.2.0<a class="anchor" aria-label="anchor" href="#klct-020"></a></h2>
+<div class="section level3">
+<h3 id="statistical-method-improvements-0-2-0">Statistical method improvements<a class="anchor" aria-label="anchor" href="#statistical-method-improvements-0-2-0"></a></h3>
+<ul><li><p><strong>Welch’s <em>t</em>-test by default</strong>: All parametric pairwise comparisons now always use Welch’s <em>t</em>-test (unequal variances assumed). The preliminary <em>F</em>-test for equal variances (<code><a href="https://rdrr.io/r/stats/var.test.html" class="external-link">var.test()</a></code>) has been removed, as it inflates Type I error rates. This affects <code><a href="../reference/compare_groups.html">compare_groups()</a></code>, <code><a href="../reference/compare_groups_2x2.html">compare_groups_2x2()</a></code>, and <code><a href="../reference/plot_groups.html">plot_groups()</a></code>.</p></li>
+<li><p><strong>Type III sums of squares</strong>: <code><a href="../reference/compare_groups_2x2.html">compare_groups_2x2()</a></code> now uses <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code> + <code>car::Anova(type = "III")</code> with sum-to-zero contrasts instead of <code><a href="https://rdrr.io/r/stats/aov.html" class="external-link">stats::aov()</a></code> (which uses Type I sequential SS). This gives correct tests for main effects and interactions with unbalanced designs.</p></li>
+<li><p><strong>Benjamini–Hochberg adjusted <em>p</em>-values</strong>: A <code>P.adj</code> column is now included in all results tables. In <code><a href="../reference/compare_groups.html">compare_groups()</a></code>, pairwise <em>p</em>-values are BH-adjusted per sex across all measures at a site. In <code><a href="../reference/compare_groups_2x2.html">compare_groups_2x2()</a></code>, omnibus <em>p</em>-values are BH-adjusted per factor across measures, and pairwise <em>p</em>-values are BH-adjusted per sex across measures. Significance stars (<code>Sig</code>) and red-color highlighting in the R Markdown templates continue to be based on the raw (unadjusted) <em>p</em>-value, as the report is intended for exploratory screening.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-output-columns-0-2-0">New output columns<a class="anchor" aria-label="anchor" href="#new-output-columns-0-2-0"></a></h3>
+<ul><li><p><strong>Difference column</strong>: A <code>Diff</code> column shows the raw difference (group 2 minus group 1). For parametric results this is the difference in means; for nonparametric results, the Hodges–Lehmann pseudomedian of pairwise differences (from <code>wilcox.test(conf.int = TRUE)</code>).</p></li>
+<li><p><strong>95% confidence intervals</strong>: <code>CI.Low</code> and <code>CI.High</code> columns report the 95% CI bounds for the difference. For parametric comparisons these come from Welch’s <em>t</em>-test. For nonparametric comparisons these come from the Wilcoxon rank-sum test with <code>conf.int = TRUE</code>.</p></li>
+<li><p><strong>Effect size reporting</strong>: A <code>Pct.Change</code> column shows the percent change of the second group relative to the first. For parametric results this is based on group means; for nonparametric results, on group medians.</p></li>
+<li><p><strong>SD column</strong>: Parametric results now include an <code>SD</code> column alongside the existing <code>SEM</code> column.</p></li>
+<li><p><strong>Q1 and Q3 columns</strong>: Nonparametric results now report <code>Q1</code> (25th percentile) and <code>Q3</code> (75th percentile) instead of <code>IQR</code>, giving a clearer picture of the distribution’s location and spread.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="dependencies-0-2-0">Dependencies<a class="anchor" aria-label="anchor" href="#dependencies-0-2-0"></a></h3>
+<ul><li>Added <code>car</code> to Imports (for <code><a href="https://rdrr.io/pkg/car/man/Anova.html" class="external-link">car::Anova()</a></code> with Type III sums of squares).</li>
+</ul></div>
+<div class="section level3">
+<h3 id="template-changes-0-2-0">Template changes<a class="anchor" aria-label="anchor" href="#template-changes-0-2-0"></a></h3>
+<ul><li>The omnibus test label in <code><a href="../reference/print_results_2x2.html">print_results_2x2()</a></code> now reads “Type III ANOVA” (parametric) and the pairwise label reads “Welch’s t-test” to reflect the updated methods.</li>
+<li>R Markdown templates no longer require all three data files (spine, metaphysis, diaphysis) to be present. When a data file is missing, the corresponding section is omitted from the report entirely rather than causing the report to error. Only the mouse table is required.</li>
+<li>The <code>knit:</code> function reference in standard (non-Mayo) templates has been corrected from <code>microctr::knit_with_colored_text</code> to <code><a href="../reference/knit_with_colored_text.html">klct::knit_with_colored_text</a></code>.</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="klct-010">klct 0.1.0<a class="anchor" aria-label="anchor" href="#klct-010"></a></h2>
 <ul><li>This is the first functional release of klct, containing the ability to analyze NeoScan microCT data comparing two treatment groups.</li>
 <li>Sites analyzed include femoral metaphysis (trabecular and cortical), femoral diaphysis (cortical), and lumbar vertebra (trabecular).</li>
@@ -63,7 +90,8 @@
 <li>Mayo-themed templates use the <code>mayodown</code> package for consistent branding, including the Mayo logo, color scheme, and copyright footer.</li>
 <li>The <code>color-text.lua</code> Pandoc filter is provided by <code>mayodown</code>, enabling colored significance annotations in all template formats.</li>
 </ul></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

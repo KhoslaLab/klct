@@ -50,7 +50,7 @@ plot_groups(
 - test:
 
   A string indicating which statistical test to use for significance
-  annotations. Options are `"parametric"` (default) for a Student's
+  annotations. Options are `"parametric"` (default) for Welch's
   *t*-test, or `"nonparametric"` for a Wilcoxon rank-sum test.
 
 - title:

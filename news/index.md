@@ -1,5 +1,83 @@
 # Changelog
 
+## klct 0.2.0
+
+### Statistical method improvements
+
+- **Welch’s *t*-test by default**: All parametric pairwise comparisons
+  now always use Welch’s *t*-test (unequal variances assumed). The
+  preliminary *F*-test for equal variances
+  ([`var.test()`](https://rdrr.io/r/stats/var.test.html)) has been
+  removed, as it inflates Type I error rates. This affects
+  [`compare_groups()`](https://khoslalab.github.io/klct/reference/compare_groups.md),
+  [`compare_groups_2x2()`](https://khoslalab.github.io/klct/reference/compare_groups_2x2.md),
+  and
+  [`plot_groups()`](https://khoslalab.github.io/klct/reference/plot_groups.md).
+
+- **Type III sums of squares**:
+  [`compare_groups_2x2()`](https://khoslalab.github.io/klct/reference/compare_groups_2x2.md)
+  now uses [`lm()`](https://rdrr.io/r/stats/lm.html) +
+  `car::Anova(type = "III")` with sum-to-zero contrasts instead of
+  [`stats::aov()`](https://rdrr.io/r/stats/aov.html) (which uses Type I
+  sequential SS). This gives correct tests for main effects and
+  interactions with unbalanced designs.
+
+- **Benjamini–Hochberg adjusted *p*-values**: A `P.adj` column is now
+  included in all results tables. In
+  [`compare_groups()`](https://khoslalab.github.io/klct/reference/compare_groups.md),
+  pairwise *p*-values are BH-adjusted per sex across all measures at a
+  site. In
+  [`compare_groups_2x2()`](https://khoslalab.github.io/klct/reference/compare_groups_2x2.md),
+  omnibus *p*-values are BH-adjusted per factor across measures, and
+  pairwise *p*-values are BH-adjusted per sex across measures.
+  Significance stars (`Sig`) and red-color highlighting in the R
+  Markdown templates continue to be based on the raw (unadjusted)
+  *p*-value, as the report is intended for exploratory screening.
+
+### New output columns
+
+- **Difference column**: A `Diff` column shows the raw difference (group
+  2 minus group 1). For parametric results this is the difference in
+  means; for nonparametric results, the Hodges–Lehmann pseudomedian of
+  pairwise differences (from `wilcox.test(conf.int = TRUE)`).
+
+- **95% confidence intervals**: `CI.Low` and `CI.High` columns report
+  the 95% CI bounds for the difference. For parametric comparisons these
+  come from Welch’s *t*-test. For nonparametric comparisons these come
+  from the Wilcoxon rank-sum test with `conf.int = TRUE`.
+
+- **Effect size reporting**: A `Pct.Change` column shows the percent
+  change of the second group relative to the first. For parametric
+  results this is based on group means; for nonparametric results, on
+  group medians.
+
+- **SD column**: Parametric results now include an `SD` column alongside
+  the existing `SEM` column.
+
+- **Q1 and Q3 columns**: Nonparametric results now report `Q1` (25th
+  percentile) and `Q3` (75th percentile) instead of `IQR`, giving a
+  clearer picture of the distribution’s location and spread.
+
+### Dependencies
+
+- Added `car` to Imports (for
+  [`car::Anova()`](https://rdrr.io/pkg/car/man/Anova.html) with Type III
+  sums of squares).
+
+### Template changes
+
+- The omnibus test label in
+  [`print_results_2x2()`](https://khoslalab.github.io/klct/reference/print_results_2x2.md)
+  now reads “Type III ANOVA” (parametric) and the pairwise label reads
+  “Welch’s t-test” to reflect the updated methods.
+- R Markdown templates no longer require all three data files (spine,
+  metaphysis, diaphysis) to be present. When a data file is missing, the
+  corresponding section is omitted from the report entirely rather than
+  causing the report to error. Only the mouse table is required.
+- The `knit:` function reference in standard (non-Mayo) templates has
+  been corrected from `microctr::knit_with_colored_text` to
+  [`klct::knit_with_colored_text`](https://khoslalab.github.io/klct/reference/knit_with_colored_text.md).
+
 ## klct 0.1.0
 
 - This is the first functional release of klct, containing the ability

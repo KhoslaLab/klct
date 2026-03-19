@@ -2,9 +2,11 @@
 
 This function takes in trabecular or cortical bone microCT data at one
 site and compares it using a two-way design with Treatment and Sex as
-factors. A parametric (two-way ANOVA) or nonparametric (Aligned Rank
-Transform via the [ARTool](https://rdrr.io/pkg/ARTool/man/art.html)
-package) approach can be selected.
+factors. A parametric (two-way ANOVA via
+[`car::Anova()`](https://rdrr.io/pkg/car/man/Anova.html) with Type III
+sums of squares) or nonparametric (Aligned Rank Transform via the
+[ARTool](https://rdrr.io/pkg/ARTool/man/art.html) package) approach can
+be selected.
 
 ## Usage
 
@@ -46,8 +48,8 @@ compare_groups_2x2(data, type = NULL, measures = NULL, test = "parametric")
 - test:
 
   A string indicating which statistical test to use. Options are
-  `"parametric"` (default) for a Student's *t*-test, or
-  `"nonparametric"` for a Wilcoxon rank-sum test.
+  `"parametric"` (default) for Welch's *t*-test, or `"nonparametric"`
+  for a Wilcoxon rank-sum test.
 
 ## Value
 
@@ -55,14 +57,17 @@ A list of each bone measure analyzed. Each measure is a list with two
 elements:
 
 - An omnibus test table: `anova` (for parametric) or `art_anova` (for
-  nonparametric), containing columns `Factor`, `P`, and `Sig`.
+  nonparametric), containing columns `Factor`, `P`, `P.adj`, and `Sig`.
+  `P.adj` is Benjamini–Hochberg-adjusted per factor across all measures.
 
 - `summary`: a tibble of group-level summary statistics with pairwise
-  comparisons (*t*-test for parametric, Wilcoxon for nonparametric)
-  merged in. Contains `Sex`, Treatment/Genotype, `n`, `Mean`/`SEM` (or
-  `Median`/`IQR`), `P`, and `Sig`. Within each sex the first group row
-  has `P = NA` and `Sig = ""`, and the second group row carries the
-  pairwise *P*-value and significance stars.
+  comparisons (Welch's *t*-test for parametric, Wilcoxon for
+  nonparametric) merged in. Contains `Sex`, Treatment/Genotype, `n`,
+  `Mean`/`SD`/`SEM` (or `Median`/`Q1`/`Q3`), `Diff`, `CI.Low`,
+  `CI.High`, `Pct.Change`, `P`, `P.adj`, and `Sig`. Within each sex the
+  first group row has `P = NA` and `Sig = ""`, and the second group row
+  carries the pairwise *P*-value and significance stars (based on raw
+  *P*).
 
 ## Examples
 
