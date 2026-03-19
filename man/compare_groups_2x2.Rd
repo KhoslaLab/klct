@@ -27,7 +27,7 @@ parameters. For trabecular data these are stored in
 }}
 
 \item{test}{A string indicating which statistical test to use. Options are
-\code{"parametric"} (default) for a Student's \emph{t}-test, or \code{"nonparametric"}
+\code{"parametric"} (default) for Welch's \emph{t}-test, or \code{"nonparametric"}
 for a Wilcoxon rank-sum test.}
 }
 \value{
@@ -35,20 +35,23 @@ A list of each bone measure analyzed. Each measure is a list with
 two elements:
 \itemize{
 \item An omnibus test table: \code{anova} (for parametric) or \code{art_anova} (for
-nonparametric), containing columns \code{Factor}, \code{P}, and \code{Sig}.
+nonparametric), containing columns \code{Factor}, \code{P}, \code{P.adj}, and \code{Sig}.
+\code{P.adj} is Benjamini--Hochberg-adjusted per factor across all measures.
 \item \code{summary}: a tibble of group-level summary statistics with pairwise
-comparisons (\emph{t}-test for parametric, Wilcoxon for nonparametric)
-merged in. Contains \code{Sex}, Treatment/Genotype, \code{n}, \code{Mean}/\code{SEM} (or
-\code{Median}/\code{IQR}), \code{P}, and \code{Sig}. Within each sex the first group row
-has \code{P = NA} and \code{Sig = ""}, and the second group row carries the
-pairwise \emph{P}-value and significance stars.
+comparisons (Welch's \emph{t}-test for parametric, Wilcoxon for
+nonparametric) merged in. Contains \code{Sex}, Treatment/Genotype, \code{n},
+\code{Mean}/\code{SD}/\code{SEM} (or \code{Median}/\code{Q1}/\code{Q3}), \code{Diff}, \code{CI.Low},
+\code{CI.High}, \code{Pct.Change}, \code{P}, \code{P.adj}, and \code{Sig}. Within each sex the first group
+row has \code{P = NA} and \code{Sig = ""}, and the second group row carries the
+pairwise \emph{P}-value and significance stars (based on raw \emph{P}).
 }
 }
 \description{
 This function takes in trabecular or cortical bone microCT data at one site
 and compares it using a two-way design with Treatment and Sex as factors.
-A parametric (two-way ANOVA) or nonparametric (Aligned Rank Transform via
-the \link[ARTool:art]{ARTool} package) approach can be selected.
+A parametric (two-way ANOVA via \code{\link[car:Anova]{car::Anova()}} with Type III sums of
+squares) or nonparametric (Aligned Rank Transform via the
+\link[ARTool:art]{ARTool} package) approach can be selected.
 }
 \examples{
 mouse_table <- read_mouse_table(klct_ex("mouse-table.csv"))

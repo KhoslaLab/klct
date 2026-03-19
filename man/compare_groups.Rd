@@ -27,21 +27,32 @@ parameters. For trabecular data these are stored in
 }}
 
 \item{test}{A string indicating which statistical test to use. Options are
-\code{"parametric"} (default) for a Student's \emph{t}-test, or \code{"nonparametric"}
+\code{"parametric"} (default) for Welch's \emph{t}-test, or \code{"nonparametric"}
 for a Wilcoxon rank-sum test.}
 }
 \value{
 A list of each bone measure analyzed. Each measure is itself a list
 of each sex analyzed. Each sex is a tibble/data frame containing columns
-for \code{Sex}, \code{Treatment}, \code{n}, \code{Mean}, \code{SEM}, \code{P}, and \code{Sig}
-(a string containing \code{"*"} if \emph{P} < 0.05, \code{"**"} if \emph{P} < 0.01, or
-\code{"***"} if \emph{P} < 0.001). When \code{test = "nonparametric"}, \code{Mean} is replaced
-by \code{Median} and \code{SEM} by \code{IQR}.
+for \code{Sex}, \code{Treatment}, \code{n}, and summary/test statistics.
+
+When \code{test = "parametric"}, the columns include \code{Mean}, \code{SD}, \code{SEM},
+\code{Diff}, \code{CI.Low}, \code{CI.High}, \code{Pct.Change}, \code{P}, \code{P.adj}, and \code{Sig}.
+When \code{test = "nonparametric"}, the columns include \code{Median}, \code{Q1}, \code{Q3},
+\code{Diff}, \code{CI.Low}, \code{CI.High}, \code{Pct.Change}, \code{P}, \code{P.adj}, and \code{Sig}.
+
+\code{Diff} is the difference (group 2 minus group 1): the difference in
+means for parametric, or the Hodges--Lehmann estimate of the location
+shift for nonparametric. \code{CI.Low} and \code{CI.High} are the 95\% confidence
+interval bounds for that difference. \code{Pct.Change} is the percent change
+of the second group relative to the first. \code{P.adj} is the
+Benjamini--Hochberg-adjusted \emph{p}-value across all measures within each
+sex. \code{Sig} is based on the raw (unadjusted) \emph{p}-value: \code{"*"} if
+\emph{P} < 0.05, \code{"**"} if \emph{P} < 0.01, \code{"***"} if \emph{P} < 0.001.
 }
 \description{
 This function takes in trabecular or cortical bone microCT data at one site
 and compares it between two treatments. By default, each sex is compared
-separately. A parametric (Student's \emph{t}-test) or nonparametric
+separately. A parametric (Welch's \emph{t}-test) or nonparametric
 (Wilcoxon rank-sum test) approach can be selected.
 }
 \examples{

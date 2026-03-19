@@ -13,7 +13,6 @@
 #'   `"trabecular"` or `"cortical"`. Defaults to `NULL`, in which case the
 #'   function will try to figure out which type of data it is.
 #' @param measures Which bone parameters to plot. There are three options:
-#'
 #'   * `NULL` (the default): plot the sensible subset of commonly reported
 #'     parameters defined in [default_trabecular_measures] or
 #'     [default_cortical_measures].
@@ -21,8 +20,8 @@
 #'   * A character vector of specific column names (e.g.,
 #'     `c("Ct.Ar", "Ct.Th")`).
 #' @param test A string indicating which statistical test to use for
-#'   significance annotations. Options are `"parametric"` (default) for a
-#'   Student's *t*-test, or `"nonparametric"` for a Wilcoxon rank-sum test.
+#'   significance annotations. Options are `"parametric"` (default) for
+#'   Welch's *t*-test, or `"nonparametric"` for a Wilcoxon rank-sum test.
 #' @param title A string indicating what type of title the plots should have.
 #'   Defaults to `"sex"`, which is currently the only option implemented. To
 #'   remove titles from the plots, set `title` to `NULL`.
@@ -90,13 +89,10 @@ plot_groups <- function(data, type = NULL, measures = NULL,
             g2 <- g2[!is.na(g2)]
 
             if (test == "parametric") {
+                # Always use Welch's t-test (no preliminary F-test)
                 if (length(g1) >= 2 && length(g2) >= 2 &&
                     stats::var(g1) > 0 && stats::var(g2) > 0) {
-                    if (stats::var.test(g1, g2)$p.value < 0.05) {
-                        tt <- stats::t.test(g1, g2)
-                    } else {
-                        tt <- stats::t.test(g1, g2, var.equal = TRUE)
-                    }
+                    tt <- stats::t.test(g1, g2)
                     p_val <- tt$p.value
                 } else {
                     p_val <- NA

@@ -1,3 +1,5 @@
+# Helper functions ---------------------------------------------------------
+
 get_sig <- function(p_value) {
     if (is.na(p_value)) return("")
     if (p_value < 0.001) {
@@ -136,7 +138,7 @@ detect_cortical_measures <- function(data) {
         }
     } else {
         # User supplied an explicit character vector
-        missing <- measures[!(measures %in% names(data))]
+        missing <- measures[!measures %in% names(data)]
         if (length(missing) > 0) {
             stop("The following measures were not found in the data: ",
                  paste(missing, collapse = ", "))
@@ -153,7 +155,7 @@ detect_cortical_measures <- function(data) {
 #'
 #' This function takes in trabecular or cortical bone microCT data at one site
 #' and compares it between two treatments. By default, each sex is compared
-#' separately. A parametric (Student's *t*-test) or nonparametric
+#' separately. A parametric (Welch's *t*-test) or nonparametric
 #' (Wilcoxon rank-sum test) approach can be selected.
 #'
 #' @param data Bone microCT data in a data frame, formatted as is the output
@@ -163,7 +165,6 @@ detect_cortical_measures <- function(data) {
 #'   `"trabecular"` or `"cortical"`. Defaults to `NULL`, in which case the
 #'   function will try to figure out which type of data it is.
 #' @param measures Which bone parameters to analyze. There are three options:
-#'
 #'   * `NULL` (the default): analyze a sensible subset of commonly reported
 #'     parameters. For trabecular data these are stored in
 #'     [default_trabecular_measures]; for cortical data, in
@@ -172,15 +173,26 @@ detect_cortical_measures <- function(data) {
 #'   * A character vector of specific column names (e.g.,
 #'     `c("Tb.BV/TV", "Tb.Th")`).
 #' @param test A string indicating which statistical test to use. Options are
-#'   `"parametric"` (default) for a Student's *t*-test, or `"nonparametric"`
+#'   `"parametric"` (default) for Welch's *t*-test, or `"nonparametric"`
 #'   for a Wilcoxon rank-sum test.
 #'
 #' @return A list of each bone measure analyzed. Each measure is itself a list
 #'   of each sex analyzed. Each sex is a tibble/data frame containing columns
-#'   for `Sex`, `Treatment`, `n`, `Mean`, `SEM`, `P`, and `Sig`
-#'   (a string containing `"*"` if *P* < 0.05, `"**"` if *P* < 0.01, or
-#'   `"***"` if *P* < 0.001). When `test = "nonparametric"`, `Mean` is replaced
-#'   by `Median` and `SEM` by `IQR`.
+#'   for `Sex`, `Treatment`, `n`, and summary/test statistics.
+#'
+#'   When `test = "parametric"`, the columns include `Mean`, `SD`, `SEM`,
+#'   `Diff`, `CI.Low`, `CI.High`, `Pct.Change`, `P`, `P.adj`, and `Sig`.
+#'   When `test = "nonparametric"`, the columns include `Median`, `Q1`, `Q3`,
+#'   `Diff`, `CI.Low`, `CI.High`, `Pct.Change`, `P`, `P.adj`, and `Sig`.
+#'
+#'   `Diff` is the difference (group 2 minus group 1): the difference in
+#'   means for parametric, or the Hodges--Lehmann estimate of the location
+#'   shift for nonparametric. `CI.Low` and `CI.High` are the 95% confidence
+#'   interval bounds for that difference. `Pct.Change` is the percent change
+#'   of the second group relative to the first. `P.adj` is the
+#'   Benjamini--Hochberg-adjusted *p*-value across all measures within each
+#'   sex. `Sig` is based on the raw (unadjusted) *p*-value: `"*"` if
+#'   *P* < 0.05, `"**"` if *P* < 0.01, `"***"` if *P* < 0.001.
 #' @export
 #'
 #' @examples
@@ -247,47 +259,82 @@ compare_groups <- function(data, type = NULL, measures = NULL,
             g2 <- g2[!is.na(g2)]
 
             if (test == "parametric") {
+                # Always use Welch's t-test (no preliminary F-test)
+                # Test g2 vs g1 so difference = group2 - group1
                 if (length(g1) >= 2 && length(g2) >= 2 &&
                     stats::var(g1) > 0 && stats::var(g2) > 0) {
-                    if (stats::var.test(g1, g2)$p.value < 0.05) {
-                        tt <- stats::t.test(g1, g2)
-                    } else {
-                        tt <- stats::t.test(g1, g2, var.equal = TRUE)
-                    }
+                    tt <- stats::t.test(g2, g1)
                     p_val <- tt$p.value
+                    diff_val <- mean(g2) - mean(g1)
+                    ci <- tt$conf.int
                 } else {
                     p_val <- NA
+                    diff_val <- NA_real_
+                    ci <- c(NA_real_, NA_real_)
                 }
 
                 sig <- get_sig(p_val)
+
+                pct <- if (mean(g1) != 0) {
+                    (mean(g2) - mean(g1)) / abs(mean(g1)) * 100
+                } else {
+                    NA_real_
+                }
 
                 r <- dplyr::tibble(
                     Sex = s,
                     Group = groups,
                     n = c(length(g1), length(g2)),
                     Mean = c(mean(g1), mean(g2)),
+                    SD = c(stats::sd(g1), stats::sd(g2)),
                     SEM = c(stats::sd(g1) / sqrt(length(g1)),
                             stats::sd(g2) / sqrt(length(g2))),
-                    P = c(NA, p_val),
+                    Diff = c(NA_real_, diff_val),
+                    CI.Low = c(NA_real_, ci[1]),
+                    CI.High = c(NA_real_, ci[2]),
+                    Pct.Change = c(NA_real_, pct),
+                    P = c(NA_real_, p_val),
+                    P.adj = NA_real_,
                     Sig = c("", sig)
                 )
             } else {
+                # Test g2 vs g1 so estimate = group2 - group1
                 if (length(g1) >= 1 && length(g2) >= 1) {
-                    wt <- stats::wilcox.test(g1, g2, exact = FALSE)
+                    wt <- stats::wilcox.test(g2, g1, exact = FALSE,
+                                             conf.int = TRUE)
                     p_val <- wt$p.value
+                    diff_val <- as.numeric(wt$estimate)
+                    ci <- wt$conf.int
                 } else {
                     p_val <- NA
+                    diff_val <- NA_real_
+                    ci <- c(NA_real_, NA_real_)
                 }
 
                 sig <- get_sig(p_val)
+
+                pct <- if (stats::median(g1) != 0) {
+                    (stats::median(g2) - stats::median(g1)) /
+                        abs(stats::median(g1)) * 100
+                } else {
+                    NA_real_
+                }
 
                 r <- dplyr::tibble(
                     Sex = s,
                     Group = groups,
                     n = c(length(g1), length(g2)),
                     Median = c(stats::median(g1), stats::median(g2)),
-                    IQR = c(stats::IQR(g1), stats::IQR(g2)),
-                    P = c(NA, p_val),
+                    Q1 = c(stats::quantile(g1, 0.25),
+                           stats::quantile(g2, 0.25)),
+                    Q3 = c(stats::quantile(g1, 0.75),
+                           stats::quantile(g2, 0.75)),
+                    Diff = c(NA_real_, diff_val),
+                    CI.Low = c(NA_real_, ci[1]),
+                    CI.High = c(NA_real_, ci[2]),
+                    Pct.Change = c(NA_real_, pct),
+                    P = c(NA_real_, p_val),
+                    P.adj = NA_real_,
                     Sig = c("", sig)
                 )
             }
@@ -297,6 +344,21 @@ compare_groups <- function(data, type = NULL, measures = NULL,
         }
         res[[m]] <- res_by_sex
     }
+
+    # BH adjustment: collect raw p-values per sex across measures, then adjust
+    for (s in sexes) {
+        raw_ps <- vapply(measures, function(m) {
+            tbl <- res[[m]][[s]]
+            tbl$P[2]
+        }, numeric(1))
+
+        adj_ps <- stats::p.adjust(raw_ps, method = "BH")
+
+        for (i in seq_along(measures)) {
+            res[[measures[i]]][[s]]$P.adj[2] <- adj_ps[i]
+        }
+    }
+
     res
 }
 
@@ -305,8 +367,9 @@ compare_groups <- function(data, type = NULL, measures = NULL,
 #'
 #' This function takes in trabecular or cortical bone microCT data at one site
 #' and compares it using a two-way design with Treatment and Sex as factors.
-#' A parametric (two-way ANOVA) or nonparametric (Aligned Rank Transform via
-#' the [ARTool][ARTool::art] package) approach can be selected.
+#' A parametric (two-way ANOVA via [car::Anova()] with Type III sums of
+#' squares) or nonparametric (Aligned Rank Transform via the
+#' [ARTool][ARTool::art] package) approach can be selected.
 #'
 #' @inheritParams compare_groups
 #'
@@ -314,13 +377,15 @@ compare_groups <- function(data, type = NULL, measures = NULL,
 #'   two elements:
 #'
 #'   * An omnibus test table: `anova` (for parametric) or `art_anova` (for
-#'     nonparametric), containing columns `Factor`, `P`, and `Sig`.
+#'     nonparametric), containing columns `Factor`, `P`, `P.adj`, and `Sig`.
+#'     `P.adj` is Benjamini--Hochberg-adjusted per factor across all measures.
 #'   * `summary`: a tibble of group-level summary statistics with pairwise
-#'     comparisons (*t*-test for parametric, Wilcoxon for nonparametric)
-#'     merged in. Contains `Sex`, Treatment/Genotype, `n`, `Mean`/`SEM` (or
-#'     `Median`/`IQR`), `P`, and `Sig`. Within each sex the first group row
-#'     has `P = NA` and `Sig = ""`, and the second group row carries the
-#'     pairwise *P*-value and significance stars.
+#'     comparisons (Welch's *t*-test for parametric, Wilcoxon for
+#'     nonparametric) merged in. Contains `Sex`, Treatment/Genotype, `n`,
+#'     `Mean`/`SD`/`SEM` (or `Median`/`Q1`/`Q3`), `Diff`, `CI.Low`,
+#'     `CI.High`, `Pct.Change`, `P`, `P.adj`, and `Sig`. Within each sex the first group
+#'     row has `P = NA` and `Sig = ""`, and the second group row carries the
+#'     pairwise *P*-value and significance stars (based on raw *P*).
 #' @export
 #'
 #' @examples
@@ -376,23 +441,30 @@ compare_groups_2x2 <- function(data, type = NULL, measures = NULL,
         groups_vec <- levels(d[[group_col]])
 
         if (test == "parametric") {
-            # --- Omnibus: two-way ANOVA, trimmed to Factor/P/Sig ---
-            formula_str <- paste0("`", m, "` ~ Sex * `", group_col, "`")
-            aov_fit <- stats::aov(stats::as.formula(formula_str), data = d)
-            aov_summary <- summary(aov_fit)[[1]]
-
-            # Drop the Residuals row
-            n_terms <- nrow(aov_summary) - 1
-            omnibus_tbl <- dplyr::tibble(
-                Factor = c("Sex", group_col,
-                           paste0("Sex:", group_col))[seq_len(n_terms)],
-                P = aov_summary[["Pr(>F)"]][seq_len(n_terms)],
-                Sig = sapply(
-                    aov_summary[["Pr(>F)"]][seq_len(n_terms)], get_sig
-                )
+            # --- Omnibus: Type III ANOVA via lm() + car::Anova() ---
+            # Use sum-to-zero contrasts so Type III SS are interpretable
+            contrasts(d$Sex) <- stats::contr.sum(nlevels(d$Sex))
+            contrasts(d[[group_col]]) <- stats::contr.sum(
+                nlevels(d[[group_col]])
             )
 
-            # --- Group summaries with pairwise t-tests ---
+            formula_str <- paste0("`", m, "` ~ Sex * `", group_col, "`")
+            lm_fit <- stats::lm(stats::as.formula(formula_str), data = d)
+            aov_tbl <- car::Anova(lm_fit, type = "III")
+
+            # Extract rows for the factors (skip Intercept and Residuals)
+            all_terms <- rownames(aov_tbl)
+            keep_terms <- all_terms[!all_terms %in%
+                                        c("(Intercept)", "Residuals")]
+
+            omnibus_tbl <- dplyr::tibble(
+                Factor = keep_terms,
+                P = aov_tbl[keep_terms, "Pr(>F)"],
+                P.adj = NA_real_,
+                Sig = sapply(aov_tbl[keep_terms, "Pr(>F)"], get_sig)
+            )
+
+            # --- Group summaries with pairwise Welch's t-tests ---
             summ_rows <- list()
             for (s in sexes_vec) {
                 ds <- d |> dplyr::filter(Sex == s)
@@ -405,16 +477,23 @@ compare_groups_2x2 <- function(data, type = NULL, measures = NULL,
                 g1 <- g1[!is.na(g1)]
                 g2 <- g2[!is.na(g2)]
 
+                # Always use Welch's t-test; g2 vs g1 so diff = group2 - group1
                 if (length(g1) >= 2 && length(g2) >= 2 &&
                     stats::var(g1) > 0 && stats::var(g2) > 0) {
-                    if (stats::var.test(g1, g2)$p.value < 0.05) {
-                        tt <- stats::t.test(g1, g2)
-                    } else {
-                        tt <- stats::t.test(g1, g2, var.equal = TRUE)
-                    }
+                    tt <- stats::t.test(g2, g1)
                     p_val <- tt$p.value
+                    diff_val <- mean(g2) - mean(g1)
+                    ci <- tt$conf.int
                 } else {
                     p_val <- NA
+                    diff_val <- NA_real_
+                    ci <- c(NA_real_, NA_real_)
+                }
+
+                pct <- if (mean(g1) != 0) {
+                    (mean(g2) - mean(g1)) / abs(mean(g1)) * 100
+                } else {
+                    NA_real_
                 }
 
                 summ_rows <- c(summ_rows, list(dplyr::tibble(
@@ -422,9 +501,15 @@ compare_groups_2x2 <- function(data, type = NULL, measures = NULL,
                     Group = groups_vec,
                     n = c(length(g1), length(g2)),
                     Mean = c(mean(g1), mean(g2)),
+                    SD = c(stats::sd(g1), stats::sd(g2)),
                     SEM = c(stats::sd(g1) / sqrt(length(g1)),
                             stats::sd(g2) / sqrt(length(g2))),
-                    P = c(NA, p_val),
+                    Diff = c(NA_real_, diff_val),
+                    CI.Low = c(NA_real_, ci[1]),
+                    CI.High = c(NA_real_, ci[2]),
+                    Pct.Change = c(NA_real_, pct),
+                    P = c(NA_real_, p_val),
+                    P.adj = NA_real_,
                     Sig = c("", get_sig(p_val))
                 )))
             }
@@ -433,7 +518,7 @@ compare_groups_2x2 <- function(data, type = NULL, measures = NULL,
 
             res[[m]] <- list(anova = omnibus_tbl, summary = summ)
         } else {
-            # --- Omnibus: ART ANOVA, trimmed to Factor/P/Sig ---
+            # --- Omnibus: ART ANOVA ---
             formula_str <- paste0("`", m, "` ~ Sex * `", group_col, "`")
             art_fit <- ARTool::art(stats::as.formula(formula_str), data = d)
             art_aov <- stats::anova(art_fit)
@@ -441,6 +526,7 @@ compare_groups_2x2 <- function(data, type = NULL, measures = NULL,
             omnibus_tbl <- dplyr::tibble(
                 Factor = rownames(art_aov),
                 P = art_aov[["Pr(>F)"]],
+                P.adj = NA_real_,
                 Sig = sapply(art_aov[["Pr(>F)"]], get_sig)
             )
 
@@ -457,11 +543,24 @@ compare_groups_2x2 <- function(data, type = NULL, measures = NULL,
                 g1 <- g1[!is.na(g1)]
                 g2 <- g2[!is.na(g2)]
 
+                # g2 vs g1 so estimate = group2 - group1
                 if (length(g1) >= 1 && length(g2) >= 1) {
-                    wt <- stats::wilcox.test(g1, g2, exact = FALSE)
+                    wt <- stats::wilcox.test(g2, g1, exact = FALSE,
+                                             conf.int = TRUE)
                     p_val <- wt$p.value
+                    diff_val <- as.numeric(wt$estimate)
+                    ci <- wt$conf.int
                 } else {
                     p_val <- NA
+                    diff_val <- NA_real_
+                    ci <- c(NA_real_, NA_real_)
+                }
+
+                pct <- if (stats::median(g1) != 0) {
+                    (stats::median(g2) - stats::median(g1)) /
+                        abs(stats::median(g1)) * 100
+                } else {
+                    NA_real_
                 }
 
                 summ_rows <- c(summ_rows, list(dplyr::tibble(
@@ -469,8 +568,16 @@ compare_groups_2x2 <- function(data, type = NULL, measures = NULL,
                     Group = groups_vec,
                     n = c(length(g1), length(g2)),
                     Median = c(stats::median(g1), stats::median(g2)),
-                    IQR = c(stats::IQR(g1), stats::IQR(g2)),
-                    P = c(NA, p_val),
+                    Q1 = c(stats::quantile(g1, 0.25),
+                           stats::quantile(g2, 0.25)),
+                    Q3 = c(stats::quantile(g1, 0.75),
+                           stats::quantile(g2, 0.75)),
+                    Diff = c(NA_real_, diff_val),
+                    CI.Low = c(NA_real_, ci[1]),
+                    CI.High = c(NA_real_, ci[2]),
+                    Pct.Change = c(NA_real_, pct),
+                    P = c(NA_real_, p_val),
+                    P.adj = NA_real_,
                     Sig = c("", get_sig(p_val))
                 )))
             }
@@ -480,5 +587,41 @@ compare_groups_2x2 <- function(data, type = NULL, measures = NULL,
             res[[m]] <- list(art_anova = omnibus_tbl, summary = summ)
         }
     }
+
+    # --- BH adjustment across measures ---
+
+    # Omnibus: adjust per factor across measures
+    omnibus_key <- if (test == "parametric") "anova" else "art_anova"
+    factor_names <- res[[measures[1]]][[omnibus_key]]$Factor
+    for (f_idx in seq_along(factor_names)) {
+        raw_ps <- vapply(measures, function(m) {
+            res[[m]][[omnibus_key]]$P[f_idx]
+        }, numeric(1))
+
+        adj_ps <- stats::p.adjust(raw_ps, method = "BH")
+
+        for (i in seq_along(measures)) {
+            res[[measures[i]]][[omnibus_key]]$P.adj[f_idx] <- adj_ps[i]
+        }
+    }
+
+    # Pairwise: adjust per sex across measures
+    sexes_vec <- levels(factor(data$Sex))
+    for (s in sexes_vec) {
+        raw_ps <- vapply(measures, function(m) {
+            summ <- res[[m]]$summary
+            sex_rows <- which(summ$Sex == s)
+            summ$P[sex_rows[2]]
+        }, numeric(1))
+
+        adj_ps <- stats::p.adjust(raw_ps, method = "BH")
+
+        for (i in seq_along(measures)) {
+            summ <- res[[measures[i]]]$summary
+            sex_rows <- which(summ$Sex == s)
+            res[[measures[i]]]$summary$P.adj[sex_rows[2]] <- adj_ps[i]
+        }
+    }
+
     res
 }

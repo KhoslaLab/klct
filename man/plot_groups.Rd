@@ -32,8 +32,8 @@ parameters defined in \link{default_trabecular_measures} or
 }}
 
 \item{test}{A string indicating which statistical test to use for
-significance annotations. Options are \code{"parametric"} (default) for a
-Student's \emph{t}-test, or \code{"nonparametric"} for a Wilcoxon rank-sum test.}
+significance annotations. Options are \code{"parametric"} (default) for
+Welch's \emph{t}-test, or \code{"nonparametric"} for a Wilcoxon rank-sum test.}
 
 \item{title}{A string indicating what type of title the plots should have.
 Defaults to \code{"sex"}, which is currently the only option implemented. To

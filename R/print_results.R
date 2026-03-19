@@ -142,12 +142,18 @@ print_results_2x2 <- function(results, sig_color = "red", ...) {
         # Determine test type and get omnibus table
         if ("anova" %in% names(r)) {
             omnibus_tbl <- r$anova
-            omnibus_label <- "*Two-Way ANOVA*"
-            summ_label <- "*Group Summaries (t-test comparing groups within each sex)*"
+            omnibus_label <- "*Type III ANOVA*"
+            summ_label <- paste0(
+                "*Group Summaries (Welch's t-test comparing groups ",
+                "within each sex)*"
+            )
         } else if ("art_anova" %in% names(r)) {
             omnibus_tbl <- r$art_anova
             omnibus_label <- "*Aligned Rank Transform ANOVA*"
-            summ_label <- "*Group Summaries (Wilcoxon comparing groups within each sex)*"
+            summ_label <- paste0(
+                "*Group Summaries (Wilcoxon comparing groups ",
+                "within each sex)*"
+            )
         } else {
             stop("Unexpected results format: expected 'anova' or 'art_anova'.")
         }

@@ -19,6 +19,7 @@ URL: https://khoslalab.github.io/klct/
 Depends: R (>= 4.1.0)
 Imports: 
     ARTool,
+    car,
     dplyr,
     ggplot2,
     here,
