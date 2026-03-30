@@ -1,3 +1,47 @@
+# klct 0.2.1
+
+## Plot improvements
+ 
+- **Significance brackets**: `plot_groups()` now uses
+  `ggsignif::geom_signif()` to draw proper comparison brackets between the
+  two treatment groups, replacing the previous `geom_text()` approach that
+  placed asterisks above individual group bars. Brackets appear only in
+  facets with a significant result (*P* < 0.05). Pre-computed *p*-values
+  (Welch's *t*-test or Wilcoxon) are passed through, keeping the test logic
+  consistent with `compare_groups()`.
+ 
+- **Data-driven y-axis limits**: Removed `expand_limits(y = 0)` from both
+  `plot_groups()` and `plot_groups_2x2()`. Axis limits are now determined
+  automatically by ggplot based on the data range, which substantially
+  improves readability for measures whose values are far from zero (e.g.,
+  `Ct.vBMD` ~1074--1432, `Ct.Ar/Tt.Ar` ~97--100%).
+ 
+- **Facet wrapping for many measures**: `plot_groups()` now caps facet
+  columns at 5 per row (via `ncol = min(n_measures, 5)`) instead of forcing
+  all facets into a single row. This prevents facet labels from being clipped
+  when plotting the 9 default cortical measures. Trabecular plots (4 default
+  measures) are unaffected.
+ 
+## Interactive data tables
+ 
+- **`print_data()`**: New exported function that wraps `DT::datatable()` to
+  display raw bone microCT data as interactive, sortable, searchable tables
+  in the Data tabs of the R Markdown templates. Each sex is displayed as a
+  separate table. Metadata columns (`Animal ID`, `Site`) are dropped and rows
+  are ordered by treatment/genotype group.
+ 
+## Template changes
+ 
+- **Version stamp**: All four R Markdown templates now include a statement in
+  the Session Info section linking to the specific version of klct used to
+  generate the report, with links to the pkgdown site and the corresponding
+  GitHub release tag.
+ 
+## Dependencies
+ 
+- Added `ggsignif` to Imports (for `geom_signif()` comparison brackets in
+  `plot_groups()`).
+
 # klct 0.2.0
  
 ## Statistical method improvements
