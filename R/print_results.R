@@ -1,16 +1,15 @@
 #' Print bone microCT data
 #'
-#' This is a wrapper around [knitr::kable()] to print out bone microCT
-#' data at one site by sex for use in an R Markdown document. A code
-#' chunk containing this function should probably have the `results = "asis"`
-#' option set to allow for pretty formatting.
+#' This is a wrapper around [DT::datatable()] to print out bone microCT
+#' data at one site by sex for use in an R Markdown document. Each sex
+#' is displayed as an interactive, sortable, searchable table.
 #'
 #' @param data A data frame containing bone microCT data, formatted as is the
 #'   output of [read_trabecular()] or [read_cortical()].
-#' @param ... Additional arguments passed on to [knitr::kable()].
+#' @param ... Additional arguments passed on to [DT::datatable()].
 #'
-#' @return Text output which by default is a Pandoc markdown pipe table for each
-#'   sex contained in the `data` supplied.
+#' @return An [htmltools::tagList()] containing one [DT::datatable()] widget
+#'   per sex.
 #' @export
 #'
 #' @examples
@@ -24,23 +23,34 @@ print_data <- function(data, ...) {
     # Determine which columns to drop (metadata columns that aren't needed)
     drop_cols <- intersect(c("Animal ID", "Site"), names(data))
 
-    for (j in seq_along(sexes)) {
-        if ("Treatment" %in% names(data)) {
-            print(knitr::kable(data |>
-                                   dplyr::filter(Sex == sexes[j]) |>
-                                   dplyr::select(-dplyr::all_of(drop_cols)) |>
-                                   dplyr::arrange(Treatment),
-                               ...))
-        } else if ("Genotype" %in% names(data)) {
-            print(knitr::kable(data |>
-                                   dplyr::filter(Sex == sexes[j]) |>
-                                   dplyr::select(-dplyr::all_of(drop_cols)) |>
-                                   dplyr::arrange(Genotype),
-                               ...))
+    # Determine the grouping column for row ordering
+    group_col <- if ("Treatment" %in% names(data)) {
+        "Treatment"
+    } else if ("Genotype" %in% names(data)) {
+        "Genotype"
+    } else {
+        NULL
+    }
+
+    widgets <- lapply(sexes, function(s) {
+        tbl <- data |>
+            dplyr::filter(Sex == s) |>
+            dplyr::select(-dplyr::all_of(drop_cols))
+
+        if (!is.null(group_col)) {
+            tbl <- tbl |> dplyr::arrange(.data[[group_col]])
         }
 
-        cat("\n\n")
-    }
+        htmltools::tagList(
+            htmltools::h4(paste("Sex:", s)),
+            DT::datatable(tbl, rownames = FALSE,
+                          options = list(pageLength = 25,
+                                         scrollX = TRUE),
+                          ...)
+        )
+    })
+
+    htmltools::tagList(widgets)
 }
 
 #' Print bone microCT comparison analysis results

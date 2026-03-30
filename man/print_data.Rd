@@ -10,17 +10,16 @@ print_data(data, ...)
 \item{data}{A data frame containing bone microCT data, formatted as is the
 output of \code{\link[=read_trabecular]{read_trabecular()}} or \code{\link[=read_cortical]{read_cortical()}}.}
 
-\item{...}{Additional arguments passed on to \code{\link[knitr:kable]{knitr::kable()}}.}
+\item{...}{Additional arguments passed on to \code{\link[DT:datatable]{DT::datatable()}}.}
 }
 \value{
-Text output which by default is a Pandoc markdown pipe table for each
-sex contained in the \code{data} supplied.
+An \code{\link[htmltools:tagList]{htmltools::tagList()}} containing one \code{\link[DT:datatable]{DT::datatable()}} widget
+per sex.
 }
 \description{
-This is a wrapper around \code{\link[knitr:kable]{knitr::kable()}} to print out bone microCT
-data at one site by sex for use in an R Markdown document. A code
-chunk containing this function should probably have the \code{results = "asis"}
-option set to allow for pretty formatting.
+This is a wrapper around \code{\link[DT:datatable]{DT::datatable()}} to print out bone microCT
+data at one site by sex for use in an R Markdown document. Each sex
+is displayed as an interactive, sortable, searchable table.
 }
 \examples{
 mouse_table <- read_mouse_table(klct_ex("mouse-table.csv"))
