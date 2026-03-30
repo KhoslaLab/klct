@@ -8,12 +8,12 @@
 ## Citation
 
 Lindsey R (2026). *klct: Analyze NeoScan microCT Data*. R package
-version 0.2.0.9999, <https://khoslalab.github.io/klct/>.
+version 0.2.1, <https://khoslalab.github.io/klct/>.
 
     @Manual{,
       title = {klct: Analyze NeoScan microCT Data},
       author = {Richard Lindsey},
       year = {2026},
-      note = {R package version 0.2.0.9999},
+      note = {R package version 0.2.1},
       url = {https://khoslalab.github.io/klct/},
     }

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">klct</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9999</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,29 @@
 
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.1" id="klct-021">klct 0.2.1<a class="anchor" aria-label="anchor" href="#klct-021"></a></h2>
+<div class="section level3">
+<h3 id="plot-improvements-0-2-1">Plot improvements<a class="anchor" aria-label="anchor" href="#plot-improvements-0-2-1"></a></h3>
+<ul><li><p><strong>Significance brackets</strong>: <code><a href="../reference/plot_groups.html">plot_groups()</a></code> now uses <code><a href="https://const-ae.github.io/ggsignif/reference/stat_signif.html" class="external-link">ggsignif::geom_signif()</a></code> to draw proper comparison brackets between the two treatment groups, replacing the previous <code>geom_text()</code> approach that placed asterisks above individual group bars. Brackets appear only in facets with a significant result (<em>P</em> &lt; 0.05). Pre-computed <em>p</em>-values (Welch’s <em>t</em>-test or Wilcoxon) are passed through, keeping the test logic consistent with <code><a href="../reference/compare_groups.html">compare_groups()</a></code>.</p></li>
+<li><p><strong>Data-driven y-axis limits</strong>: Removed <code>expand_limits(y = 0)</code> from both <code><a href="../reference/plot_groups.html">plot_groups()</a></code> and <code><a href="../reference/plot_groups_2x2.html">plot_groups_2x2()</a></code>. Axis limits are now determined automatically by ggplot based on the data range, which substantially improves readability for measures whose values are far from zero (e.g., <code>Ct.vBMD</code> ~1074–1432, <code>Ct.Ar/Tt.Ar</code> ~97–100%).</p></li>
+<li><p><strong>Facet wrapping for many measures</strong>: <code><a href="../reference/plot_groups.html">plot_groups()</a></code> now caps facet columns at 5 per row (via <code>ncol = min(n_measures, 5)</code>) instead of forcing all facets into a single row. This prevents facet labels from being clipped when plotting the 9 default cortical measures. Trabecular plots (4 default measures) are unaffected.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="interactive-data-tables-0-2-1">Interactive data tables<a class="anchor" aria-label="anchor" href="#interactive-data-tables-0-2-1"></a></h3>
+<ul><li>
+<strong><code><a href="../reference/print_data.html">print_data()</a></code></strong>: New exported function that wraps <code><a href="https://rdrr.io/pkg/DT/man/datatable.html" class="external-link">DT::datatable()</a></code> to display raw bone microCT data as interactive, sortable, searchable tables in the Data tabs of the R Markdown templates. Each sex is displayed as a separate table. Metadata columns (<code>Animal ID</code>, <code>Site</code>) are dropped and rows are ordered by treatment/genotype group.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="template-changes-0-2-1">Template changes<a class="anchor" aria-label="anchor" href="#template-changes-0-2-1"></a></h3>
+<ul><li>
+<strong>Version stamp</strong>: All four R Markdown templates now include a statement in the Session Info section linking to the specific version of klct used to generate the report, with links to the pkgdown site and the corresponding GitHub release tag.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="dependencies-0-2-1">Dependencies<a class="anchor" aria-label="anchor" href="#dependencies-0-2-1"></a></h3>
+<ul><li>Added <code>ggsignif</code> to Imports (for <code>geom_signif()</code> comparison brackets in <code><a href="../reference/plot_groups.html">plot_groups()</a></code>).</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0" id="klct-020">klct 0.2.0<a class="anchor" aria-label="anchor" href="#klct-020"></a></h2>
 <div class="section level3">

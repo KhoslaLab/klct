@@ -77,8 +77,8 @@ list index, see
 ## Details
 
 If the two treatments are significantly different, statistical
-significance will be indicated with `"*"` if *P* \< 0.05, `"**"` if *P*
-\< 0.01, or `"***"` if *P* \< 0.001.
+significance will be indicated with a bracket and `"*"` if *P* \< 0.05,
+`"**"` if *P* \< 0.01, or `"***"` if *P* \< 0.001.
 
 ## Examples
 
