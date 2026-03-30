@@ -356,7 +356,7 @@ plot_groups_2x2(met_cort, measures = measures_param) |> print_plots()
 cat("\n\n### By-Sex Plots\n\n")
 ```
 
-```{r f-met-ct-plot, eval = has_met, include = has_met}
+```{r f-met-ct-plot, eval = has_met, include = has_met, fig.height = 6}
 plot_groups(met_cort, measures = measures_param) |> print_plots()
 ```
 
@@ -364,7 +364,7 @@ plot_groups(met_cort, measures = measures_param) |> print_plots()
 cat("\n\n### Combined Sexes Plots\n\n")
 ```
 
-```{r f-met-ct-combined-plot, eval = has_met, include = has_met}
+```{r f-met-ct-combined-plot, eval = has_met, include = has_met, fig.height = 6}
 met_cort |>
     mutate(Sex = "B") |>
     plot_groups(measures = measures_param, title = NULL) |>
@@ -434,7 +434,7 @@ plot_groups_2x2(dia_cort, measures = measures_param) |> print_plots()
 cat("\n\n### By-Sex Plots\n\n")
 ```
 
-```{r f-dia-ct-plot, eval = has_dia, include = has_dia}
+```{r f-dia-ct-plot, eval = has_dia, include = has_dia, fig.height = 6}
 plot_groups(dia_cort, measures = measures_param) |> print_plots()
 ```
 
@@ -442,7 +442,7 @@ plot_groups(dia_cort, measures = measures_param) |> print_plots()
 cat("\n\n### Combined Sexes Plots\n\n")
 ```
 
-```{r f-dia-ct-combined-plot, eval = has_dia, include = has_dia}
+```{r f-dia-ct-combined-plot, eval = has_dia, include = has_dia, fig.height = 6}
 dia_cort |>
     mutate(Sex = "B") |>
     plot_groups(measures = measures_param, title = NULL) |>

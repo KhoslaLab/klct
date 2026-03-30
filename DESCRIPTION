@@ -23,6 +23,7 @@ Imports:
     dplyr,
     DT,
     ggplot2,
+    ggsignif,
     here,
     htmltools,
     knitr,

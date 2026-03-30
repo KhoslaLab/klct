@@ -53,8 +53,8 @@ treatments. Each sex is plotted separately.
 }
 \details{
 If the two treatments are significantly different, statistical significance
-will be indicated with \code{"*"} if \emph{P} < 0.05, \code{"**"} if \emph{P} < 0.01, or
-\code{"***"} if \emph{P} < 0.001.
+will be indicated with a bracket and \code{"*"} if \emph{P} < 0.05, \code{"**"} if
+\emph{P} < 0.01, or \code{"***"} if \emph{P} < 0.001.
 }
 \examples{
 mouse_table <- read_mouse_table(klct_ex("mouse-table.csv"))

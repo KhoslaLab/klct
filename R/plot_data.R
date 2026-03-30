@@ -4,8 +4,8 @@
 #' treatments. Each sex is plotted separately.
 #'
 #' If the two treatments are significantly different, statistical significance
-#' will be indicated with `"*"` if *P* < 0.05, `"**"` if *P* < 0.01, or
-#' `"***"` if *P* < 0.001.
+#' will be indicated with a bracket and `"*"` if *P* < 0.05, `"**"` if
+#' *P* < 0.01, or `"***"` if *P* < 0.001.
 #'
 #' @param data A tibble/data frame containing bone microCT data, formatted as is
 #'   the output of [read_trabecular()] or [read_cortical()].
@@ -69,13 +69,17 @@ plot_groups <- function(data, type = NULL, measures = NULL,
     }
 
     sexes <- data$Sex |> unique()
-    res_by_sex <- vector(mode = "list", length = length(sexes))
+    annot_by_sex <- vector(mode = "list", length = length(sexes))
     plot_by_sex <- vector(mode = "list", length = length(sexes))
-    names(res_by_sex) <- names(plot_by_sex) <- sexes
+    names(annot_by_sex) <- names(plot_by_sex) <- sexes
 
     for (s in sexes) {
         d <- dat |> dplyr::filter(Sex == s)
-        res <- dplyr::tibble()
+        annot <- dplyr::tibble(
+            Measure = factor(character(), levels = measures),
+            label = character(),
+            y_position = double()
+        )
 
         for (m in measures) {
             g1 <- d |>
@@ -108,22 +112,19 @@ plot_groups <- function(data, type = NULL, measures = NULL,
 
             sig <- get_sig(p_val)
 
-            r <- dplyr::tibble(
-                Sex = s,
-                Group = groups,
-                Measure = m,
-                Value = c(
-                    max(g1, na.rm = TRUE) + 1.5 * (stats::sd(g1) / sqrt(length(g1))),
-                    max(g2, na.rm = TRUE) + 1.5 * (stats::sd(g2) / sqrt(length(g2)))
-                ),
-                P = c(NA, p_val),
-                Sig = c("", sig)
-            )
-
-            r <- r |> dplyr::rename(!!group_col := Group)
-            res <- dplyr::bind_rows(res, r)
+            if (nchar(sig) > 0) {
+                all_vals <- c(g1, g2)
+                y_max <- max(all_vals, na.rm = TRUE)
+                y_range <- diff(range(all_vals, na.rm = TRUE))
+                # Place bracket just above the highest data point
+                annot <- dplyr::bind_rows(annot, dplyr::tibble(
+                    Measure = factor(m, levels = measures),
+                    label = sig,
+                    y_position = y_max + 0.05 * y_range
+                ))
+            }
         }
-        res_by_sex[[s]] <- res
+        annot_by_sex[[s]] <- annot
     }
 
     for (s in sexes) {
@@ -136,26 +137,35 @@ plot_groups <- function(data, type = NULL, measures = NULL,
         p <- plot_dat |>
             ggplot2::ggplot(ggplot2::aes(x = .data[[group_col]], y = Value))
 
+        n_facet_cols <- min(length(measures), 5)
+
         p <- p +
             ggplot2::facet_wrap(ggplot2::vars(factor(Measure,
                                                      levels = measures)),
                                 scales = "free_y",
-                                nrow = 1) +
+                                ncol = n_facet_cols) +
             ggplot2::geom_boxplot() +
             ggplot2::geom_point(position = ggplot2::position_jitter(width = 0.2)) +
-            ggplot2::expand_limits(y = 0) +
             ggplot2::theme(axis.text.x = ggplot2::element_text(
                 angle = x_axis_angle, vjust = 0.5, hjust = 0.5
             ))
 
-        p <- p +
-            ggplot2::geom_text(
-                data = res_by_sex[[s]],
-                mapping = ggplot2::aes(
-                    x = .data[[group_col]], y = Value, label = Sig
-                ),
-                size = 9
-            )
+        if (nrow(annot_by_sex[[s]]) > 0) {
+            p <- p +
+                ggsignif::geom_signif(
+                    data = annot_by_sex[[s]],
+                    ggplot2::aes(
+                        xmin = 1,
+                        xmax = 2,
+                        annotations = label,
+                        y_position = y_position
+                    ),
+                    manual = TRUE,
+                    textsize = 5,
+                    vjust = -0.2,
+                    inherit.aes = FALSE
+                )
+        }
 
         if (!is.null(title)) {
             if (title == "sex") {
@@ -218,7 +228,6 @@ plot_groups_2x2 <- function(data, type = NULL, measures = NULL,
                     jitter.width = 0.2, dodge.width = 0.8
                 )
             ) +
-            ggplot2::expand_limits(y = 0) +
             ggplot2::ggtitle(m) +
             ggplot2::theme(axis.text.x = ggplot2::element_text(
                 angle = x_axis_angle, vjust = 0.5, hjust = 0.5
