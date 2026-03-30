@@ -1,5 +1,19 @@
 # Changelog
 
+## klct 0.2.2
+
+- **Y-axis labels with units**:
+  [`plot_groups()`](https://khoslalab.github.io/klct/reference/plot_groups.md)
+  facet strips and
+  [`plot_groups_2x2()`](https://khoslalab.github.io/klct/reference/plot_groups_2x2.md)
+  y-axis labels now display the measure name with its unit (e.g., “Ct.Th
+  (mm)”, “Ct.vBMD (mg HA/cm³)”). In
+  [`plot_groups()`](https://khoslalab.github.io/klct/reference/plot_groups.md),
+  the unit wraps to a second line below the measure name so that facet
+  strips stay compact even with long units. An internal `measure_units`
+  lookup in `R/labels.R` maps every NeoScan measure column to its unit
+  string; unknown measures fall back to the raw column name.
+
 ## klct 0.2.1
 
 ### Plot improvements

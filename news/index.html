@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">klct</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,11 @@
 
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.2" id="klct-022">klct 0.2.2<a class="anchor" aria-label="anchor" href="#klct-022"></a></h2>
+<ul><li>
+<strong>Y-axis labels with units</strong>: <code><a href="../reference/plot_groups.html">plot_groups()</a></code> facet strips and <code><a href="../reference/plot_groups_2x2.html">plot_groups_2x2()</a></code> y-axis labels now display the measure name with its unit (e.g., “Ct.Th (mm)”, “Ct.vBMD (mg HA/cm³)”). In <code><a href="../reference/plot_groups.html">plot_groups()</a></code>, the unit wraps to a second line below the measure name so that facet strips stay compact even with long units. An internal <code>measure_units</code> lookup in <code>R/labels.R</code> maps every NeoScan measure column to its unit string; unknown measures fall back to the raw column name.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.1" id="klct-021">klct 0.2.1<a class="anchor" aria-label="anchor" href="#klct-021"></a></h2>
 <div class="section level3">
