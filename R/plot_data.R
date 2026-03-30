@@ -127,6 +127,12 @@ plot_groups <- function(data, type = NULL, measures = NULL,
         annot_by_sex[[s]] <- annot
     }
 
+    # Build a named vector for facet strip labels with units.
+    # Use multiline so the unit wraps below the measure name in narrow facets.
+    facet_labels <- stats::setNames(
+        get_measure_label(measures, multiline = TRUE), measures
+    )
+
     for (s in sexes) {
         plot_dat <- data |>
             dplyr::filter(Sex == s) |>
@@ -140,12 +146,15 @@ plot_groups <- function(data, type = NULL, measures = NULL,
         n_facet_cols <- min(length(measures), 5)
 
         p <- p +
-            ggplot2::facet_wrap(ggplot2::vars(factor(Measure,
-                                                     levels = measures)),
-                                scales = "free_y",
-                                ncol = n_facet_cols) +
+            ggplot2::facet_wrap(
+                ggplot2::vars(factor(Measure, levels = measures)),
+                scales = "free_y",
+                ncol = n_facet_cols,
+                labeller = ggplot2::as_labeller(facet_labels)
+            ) +
             ggplot2::geom_boxplot() +
             ggplot2::geom_point(position = ggplot2::position_jitter(width = 0.2)) +
+            ggplot2::ylab(NULL) +
             ggplot2::theme(axis.text.x = ggplot2::element_text(
                 angle = x_axis_angle, vjust = 0.5, hjust = 0.5
             ))
@@ -229,6 +238,7 @@ plot_groups_2x2 <- function(data, type = NULL, measures = NULL,
                 )
             ) +
             ggplot2::ggtitle(m) +
+            ggplot2::ylab(get_measure_label(m)) +
             ggplot2::theme(axis.text.x = ggplot2::element_text(
                 angle = x_axis_angle, vjust = 0.5, hjust = 0.5
             ))
